@@ -1,0 +1,164 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-api-tmf632-party-mgt
+  namespace: businesspartner
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 8
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: ms-api-tmf632-party-mgt
+      app.kubernetes.io/name: java-micro
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: ms-api-tmf632-party-mgt
+        app.kubernetes.io/name: java-micro
+    spec:
+      containers:
+      - env:
+          - name: PREPAID_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: PREPAID_BASE_URL
+          - name: POSTPAID_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: POSTPAID_BASE_URL
+          - name: CUSTOMER_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: CUSTOMER_BASE_URL
+          - name: SCIM2_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: SCIM2_BASE_URL
+          - name: USER_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: USER_BASE_URL
+          - name: TMF629_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: TMF629_BASE_URL
+          - name: AWS_REGION
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: AWS_REGION
+          - name: AWS_DYNAMODB_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: ms-api-tmf632-party-mgt-cm
+                key: AWS_DYNAMODB_NAME           
+          - name: CUSTOMER_USR
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: CUSTOMER_USR
+          - name: CUSTOMER_PWD
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: CUSTOMER_PWD
+          - name: PREPAID_USR
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: PREPAID_USR
+          - name: PREPAID_PWD
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: PREPAID_PWD   
+          - name: POSTPAID_USR
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: POSTPAID_USR
+          - name: POSTPAID_PWD
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: POSTPAID_PWD 
+          - name: USER_USER
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: USER_USER
+          - name: USER_PWD
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: USER_PWD    
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: AWS_ACCESS_KEY_ID  
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ms-api-tmf632-party-mgt-cs
+                key: AWS_SECRET_ACCESS_KEY                  
+        image: 177890020059.dkr.ecr.mx-central-1.amazonaws.com/e/mxapm0002480-source-ms-api-tmf632-party-mgt:0.0.1-SNAPSHOT-6bf1c78.14
+        imagePullPolicy: Always
+        name: java-micro
+        ports:
+        - containerPort: 16600
+          name: backend
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 700m
+            ephemeral-storage: 7Gi
+            memory: 2Gi
+          requests:
+            cpu: 400m
+            ephemeral-storage: 500Mi
+            memory: 800Mi
+        securityContext:
+          readOnlyRootFilesystem: false
+        startupProbe:
+          failureThreshold: 18
+          httpGet:
+            path: /actuator/health
+            port: backend
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/apps/middleware/java/jdk21/lib/security/cacerts
+          name: pv-cacerts-jdk21
+          readOnly: true
+          subPath: cacerts
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:              
+          defaultMode: 420
+          items:
+          - key: cacerts
+            path: cacerts
+          name: cm-cacerts-jdk21
+        name: pv-cacerts-jdk21
